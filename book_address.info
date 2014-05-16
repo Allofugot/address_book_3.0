@@ -1,0 +1,15 @@
+name = Address book 2.0
+
+description = New fresh version of Address book, light and easy to use and to modify
+
+dependencies[] = date
+dependencies[] = views
+dependencies[] = entity
+dependencies[] = rules
+dependencies[] = ctools
+dependencies[] = features
+dependencies[] = book_address_2_0_feature
+
+package = Address
+
+core = 7.x

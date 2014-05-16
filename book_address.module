@@ -1,0 +1,176 @@
+<?php
+
+/**
+ * @file
+ * Main file of the module.
+ */
+
+// Load CRUD functions.
+module_load_include('crud.inc', 'book_address');
+
+/**
+ * Implements hook_menu().
+ */
+
+function book_address_menu() {
+  $item['book-address/contact/%'] = array(
+    'title' => t('Address book 2.0'),
+    'page callback' => 'book_address_page_view',
+    'page arguments' => array(2),
+    'access callback' => 'book_address_access',
+    'access arguments'=> array(2),
+  );
+
+  // новый роут для delete
+  $item['book-address/delete/%'] = array (
+    'page callback' => 'book_address_contact_delete',
+    'page arguments' => array(2),
+    'access callback' => TRUE,
+  );
+
+  return $item;
+}
+
+/**
+ * Implements custom function - delete.
+ *
+ * @param $aid
+ */
+function book_address_contact_delete($aid) {
+  book_address_delete($aid);
+  drupal_goto('book-address');
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function book_address_entity_info() {
+  $item = array(
+    'book_address' => array(
+      'label' => t('Address book 2.0'),
+      'base table' => 'book_address',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'aid',
+        'label' => 'title',
+      ),
+      'bundles' => array(
+        'book_address' => array(
+          'label' => t('Address book 2.0'),
+          'admin' => array(
+            'path' => 'admin/content/book-address/structure',
+            'access arguments' => array('administer site configuration'),
+          ),
+        ),
+      ),
+
+      // Entity API-related parameters.
+      'controller class' => 'EntityAPIController',
+      'entity class' => 'Entity',
+      'admin ui' => array(
+        'path' => 'book-address',
+        'file' => 'book_address.admin.inc',
+      ),
+      'module' => 'book_address',
+      'access callback' => 'book_address_access',
+    ),
+  );
+
+  return $item;
+}
+
+/**
+ * Implements hook_init().
+ */
+function book_address_init() {
+  $path = drupal_get_path('module', 'book_address');
+  drupal_add_js($path . '/js/delete_and_show.js');
+}
+
+
+/**
+ * Implements custom function - book_address_page_view()
+ *
+ * @param $aid
+ * @return bool
+ */
+function book_address_page_view($aid) {
+
+  drupal_add_library('system', 'drupal.ajax');
+  drupal_add_library('system', 'jquery.form');
+
+  $book_address = book_address_load($aid);
+  $book_address_wrapped = entity_metadata_wrapper('book_address', $book_address);
+  $output = book_address_view($book_address);
+
+  return $output;
+}
+
+/**
+ * Implements hook_form_alter()
+ *
+ * Trying to make aliases....
+ *
+ * @param $form
+ * @param $form_state
+ * @param $vbo
+ */
+function book_address_views_bulk_operations_form_alter(&$form, &$form_state, $vbo, $aid) {
+
+  if($form_state['step'] == 'views_form_views_form') {
+    $form['actions']['action::views_bulk_operations_delete_item'] = $form['select']['action::views_bulk_operations_delete_item'];
+    $form['select']['action::views_bulk_operations_delete_item']['#printed'] = TRUE;
+    $form['actions']['submit']['#access'] = FALSE;
+    $form['actions']['#access'] = TRUE;
+  }
+
+  if($form_state['step'] == 'views_bulk_operations_config_form') {
+    $form['parameter']['term']['settings']['term']['#type'] = 'select';
+    $voc = taxonomy_vocabulary_machine_name_load('category_book_address');
+    $term = taxonomy_get_tree($voc->vid);
+    $select_term = array();
+    foreach ($term as $item) {
+      $key = $item->tid;
+      $value = $item->name;
+      $select_term[$key] = $value;
+    }
+    $form['parameter']['term']['settings']['term']['#options'] = $select_term;
+  }
+}
+
+/**
+ *Implements hook_permission()
+ *
+ * @return array
+ */
+function book_address_permission() {
+  return array(
+    'access method' => array(
+      'title' => t('book_address module'),
+      'description' => t('book_address module'),
+    ),
+  );
+}
+
+/**
+ * Made an access to book_address entities
+ *
+ * @return bool
+ */
+function book_address_access() {
+  return user_access('access method');
+}
+
+/**
+ * Implements hook_entity_property_info_alter()
+ *
+ * @param $info
+ */
+function book_address_entity_property_info_alter(&$info) {
+  $info['book_address']['properties']['uid'] = array(
+    'label' => 'Uid',
+    'type' => 'user',
+    'schema field' => 'uid',
+    'description' => 'Contacts "uid" property'
+  );
+}

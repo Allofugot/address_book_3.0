@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the book_address_2.0_feature feature.
+ */
+
+include_once 'book_address_2_0_feature.features.inc';

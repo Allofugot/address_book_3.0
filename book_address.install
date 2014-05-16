@@ -1,0 +1,95 @@
+<?php
+
+/**
+ * Implements hook_install()
+ *
+ * Install vocabulary
+ * @file
+ */
+function book_address_install() {
+  taxonomy_vocabulary_save((object) array(
+    'name' => t('Category address book 2'),
+    'machine_name' => 'category_book_address',
+    'description' => t('Category vocabulary of book_address module'),
+    'module' => 'book_address',
+  ));
+
+  $voc = taxonomy_vocabulary_machine_name_load('category_book_address');
+  $terms = array('Family', 'Friends', 'Business', 'Blacklist');
+
+  foreach ($terms as $term) {
+    taxonomy_term_save((object) array(
+      'name' => $term,
+      'vid' => $voc->vid,
+    ));
+  }
+  //$dir = 'public://book_address/category';
+  //file_prepare_directory($dir, FILE_CREATE_DIRECTORY);
+  $style = array('name' => 'contact_image');
+    $style_create = image_style_save($style);
+
+    $style = image_style_load('contact_image');
+    $isid = $style['isid'];
+
+    $effect=array (
+      'label' => 'Scale',
+      'help' => 'Scaling will maintain the aspect-ratio of the original image. If only a single dimension is specified, the other dimension will be calculated.',
+      'effect callback' => 'image_scale_effect',
+      'form callback' => 'image_scale_form',
+      'summary theme' => 'image_scale_summary',
+      'module' => 'image',
+      'name' => 'image_scale',
+      'data' => array (
+        'width' => '500',
+        'height' => '',
+        'upscale' => 0,
+      ),
+      'ieid' => NULL,
+      'isid' => $isid,
+      'weight' => '1',
+    );
+
+    image_effect_save($effect);
+}
+
+/**
+ * Implements hook_uninstall()
+ *
+ * Uninstall vocabulary
+ */
+function book_address_uninstall() {
+  $voc = taxonomy_vocabulary_machine_name_load('category_book_address');
+  if ($voc) {
+    taxonomy_vocabulary_delete($voc->vid);
+  }
+}
+
+/**
+ * Implements hook_schema()
+ * adds: entity id, user id
+ *
+ * @return array
+ */
+
+function book_address_schema() {
+  $schema = array(
+    'book_address' => array(
+      'description' => 'Table for Address book 2.0 entities',
+      'fields' => array(
+        'aid' => array(
+          'description' => 'Contains Address book 2.0 IDs',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'uid' => array(
+          'description' => 'Contains user id for Address book 2.0',
+          'type' => 'int',
+        ),
+      ),
+      'primary key' => array('aid'),
+    ),
+  );
+
+  return $schema;
+}
